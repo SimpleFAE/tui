@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>小陶子影院</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* 导航栏样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* 分类标签样式 */
+        .categories {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .category-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            list-style: none;
+        }
+
+        .category-item {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .category-item.active {
+            background-color: #007AFF;
+            color: white;
+        }
+
+        /* 内容区域样式 */
+        .content {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .page-item {
+            padding: 0.5rem 1rem;
+            border: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .page-item.active {
+            background-color: #007AFF;
+            color: white;
+        }
+
+        /* 底部标语样式 */
+        .slogan {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.5rem;
+            font-family: "楷体", KaiTi, serif;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="logo.png" alt="小陶子影院">
+            <h1>小陶子影院</h1>
+        </div>
+        <nav class="nav-links">
+            <a href="#">首页</a>
+            <a href="#">电影</a>
+            <a href="#">榜单</a>
+            <a href="#">关于我们</a>
+        </nav>
+    </header>
+
+    <div class="categories">
+        <ul class="category-list">
+            <li class="category-item active">全部</li>
+            <li class="category-item">111</li>
+            <li class="category-item">喜剧</li>
+            <li class="category-item">动画</li>
+            <li class="category-item">剧情</li>
+            <li class="category-item">恐怖</li>
+            <li class="category-item">动作</li>
+            <li class="category-item">科幻</li>
+            <li class="category-item">悬疑</li>
+        </ul>
+    </div>
+
+    <main class="content">
+        <p>抱歉，没有找到相关结果，请尝试其他条件搜索。</p>
+        
+        <div class="pagination">
+            <span class="page-item">&lt;</span>
+            <span class="page-item active">1</span>
+            <span class="page-item">&gt;</span>
+        </div>
+    </main>
+
+    <footer class="slogan">
+        看电影，就选小陶子影院
+    </footer>
+</body>
+</html>

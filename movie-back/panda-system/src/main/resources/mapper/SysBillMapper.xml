@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panda.system.mapper.SysBillMapper">
+
+    <!-- 结果映射，将查询结果映射到 SysBill 对象 -->
+    <resultMap id="BillMap" type="SysBill">
+        <!-- 将数据库的 bill_id 映射到 SysBill 对象的 billId -->
+        <id property="billId" column="bill_id"></id>
+
+        <!-- 将 user_id 映射到 SysBill 对象的 userId -->
+        <result property="userId" column="user_id"></result>
+
+        <!-- 将 session_id 映射到 SysBill 对象的 sessionId -->
+        <result property="sessionId" column="session_id"></result>
+
+        <!-- 关联查询：通过 session_id 查询对应的场次信息 -->
+        <association property="sysSession" column="session_id" select="com.panda.system.mapper.SysSessionMapper.findSessionById"></association>
+
+        <!-- 关联查询：通过 user_id 查询对应的用户信息 -->
+        <association property="sysUser" column="user_id" select="com.panda.system.mapper.SysUserMapper.findUserById"></association>
+    </resultMap>
+
+    <!-- 查询所有订单，根据条件动态拼接 SQL -->
+    <select id="findAllBills" parameterType="SysBill" resultMap="BillMap">
+        select * from sys_bill
+        <where>
+            <!-- 如果 payState 不为空，添加支付状态条件 -->
+            <if test="payState != null"> and pay_state = #{payState} </if>
+
+            <!-- 如果 sessionId 不为空，添加场次 ID 条件 -->
+            <if test="sessionId != null and sessionId !=''"> and session_id = #{sessionId} </if>
+
+            <!-- 如果 queryByUserName 不为空，查询用户用户名 -->
+            <if test="queryByUserName != null and queryByUserName != ''">
+                and user_id in
+                (select user_id
+                from sys_user
+                where user_name like concat('%', #{queryByUserName}, '%'))
+            </if>
+
+            <!-- 如果 userId 不为空，添加用户 ID 条件 -->
+            <if test="userId != null"> and user_id = #{userId} </if>
+
+            <!-- 如果 createTime 不为空，查询订单创建时间 -->
+            <if test="createTime != null"> and create_time &gt;= #{createTime} and create_time &lt;= adddate(#{createTime}, 1) </if>
+        </where>
+        <!-- 按照 bill_id 降序排列 -->
+        order by bill_id desc
+    </select>
+
+    <!-- 根据订单 ID 查询订单详情 -->
+    <select id="findBillById" parameterType="long" resultMap="BillMap">
+        select * from sys_bill where bill_id = #{id}
+    </select>
+
+    <!-- 查询所有超时且未支付的订单 -->
+    <select id="findTimeoutBill" resultMap="BillMap">
+        select * from sys_bill where sysdate() >= deadline and cancel_state = 0 and pay_state = 0
+    </select>
+
+    <!-- 添加订单：将订单插入数据库，并返回插入后的主键值 -->
+    <update id="addBill" parameterType="SysBill">
+        <!-- 获取插入后的主键 bill_id -->
+        <selectKey keyProperty="billId" keyColumn="bill_id" resultType="long" order="AFTER">
+            select last_insert_id();
+        </selectKey>
+
+        <!-- 插入订单数据 -->
+        insert into sys_bill (
+        <!-- 如果 payState 不为空，插入支付状态 -->
+        <if test="payState != null">pay_state, </if>
+        user_id, session_id, seats, create_time, deadline
+        ) values (
+        <!-- 如果 payState 不为空，插入支付状态 -->
+        <if test="payState != null">#{payState}, </if>
+        #{userId}, #{sessionId}, #{seats},
+
+        <!-- 如果 createTime 不为空，插入创建时间 -->
+        <if test="createTime != null">#{createTime},</if>
+        <!-- 如果 createTime 为空，使用当前时间 -->
+        <if test="createTime == null">sysdate(),</if>
+
+        <!-- 设置订单的截止时间 -->
+        addtime(sysdate(), 15*100)
+        )
+    </update>
+
+    <!-- 更新订单信息 -->
+    <update id="updateBill" parameterType="SysBill">
+        update sys_bill set
+        <!-- 如果 payState 不为空，更新支付状态 -->
+        <if test="payState != null">pay_state = #{payState}, </if>
+
+        <!-- 如果 cancelState 不为空，更新取消状态 -->
+        <if test="cancelState != null">cancel_state = #{cancelState}, </if>
+
+        <!-- 如果 payState 不为空，再次更新支付状态 -->
+        <if test="payState != null">pay_state = #{payState}, </if>
+
+        <!-- 如果 seats 不为空，更新座位信息 -->
+        <if test="seats != null and seats != ''">seats = #{seats}, </if>
+
+        <!-- 如果 cancelTime 不为空，更新取消时间 -->
+        <if test="cancelTime != null ">cancel_time = #{cancelTime}, </if>
+
+        <!-- 更新时间为当前时间 -->
+        create_time = sysdate()
+        where bill_id = #{billId}
+    </update>
+
+    <!-- 根据订单 ID 删除订单 -->
+    <update id="deleteBill" parameterType="long">
+        delete from sys_bill where bill_id = #{id}
+    </update>
+
+</mapper>
+<!--        注释说明：-->
+<!--<resultMap>：定义了如何将 SQL 查询的结果映射到 Java 对象 SysBill 中，使用了 <association> 标签进行关联查询。-->
+<!--    findAllBills：根据多种查询条件动态生成 SQL 语句，查询所有符合条件的订单。-->
+<!--    findBillById：通过 bill_id 查询订单的详细信息。-->
+<!--    findTimeoutBill：查询超时且未支付的订单，使用 sysdate() 获取当前时间进行比较。-->
+<!--    addBill：插入新的订单，并使用 <selectKey> 获取插入后的主键值 bill_id。-->
+<!--        updateBill：根据订单的 bill_id 更新订单信息，动态更新字段，如支付状态、座位信息、取消时间等。-->
+<!--        deleteBill：根据订单 bill_id 删除订单。-->
+<!--        每个 SQL 语句都有注释来解释其功能和动态生成的 SQL 部分。-->

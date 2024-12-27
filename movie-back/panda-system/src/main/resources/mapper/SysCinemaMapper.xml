@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panda.system.mapper.SysCinemaMapper">
+
+    <!--
+    查询影院信息，包括影院的基本信息，以及影院上映的所有电影信息。
+    使用了 @resultMap 映射，并且通过嵌套查询返回影院上映的电影列表。
+    -->
+    <resultMap id="SysCinemaMap" type="SysCinema">
+        <!-- 影院ID -->
+        <id property="cinemaId" column="cinema_id"></id>
+        <!-- 影院名称 -->
+        <result property="cinemaName" column="cinema_name"></result>
+        <!-- 影院类别列表 -->
+        <result property="hallCategoryList" column="hall_category_list"></result>
+        <!-- 影院图片 -->
+        <result property="cinemaPicture" column="cinema_picture"></result>
+        <!-- 影院地址 -->
+        <result property="cinemaAddress" column="cinema_address"></result>
+        <!-- 影院电话 -->
+        <result property="cinemaPhone" column="cinema_phone"></result>
+        <!-- 影院开始营业时间 -->
+        <result property="workStartTime" column="work_start_time"></result>
+        <!-- 影院结束营业时间 -->
+        <result property="workEndTime" column="work_end_time"></result>
+        <!-- 影院上映的所有电影信息，通过嵌套查询获取 -->
+        <collection property="sysMovieList" ofType="SysMovie" column="cinema_id" select="com.panda.system.mapper.SysMovieMapper.findMovieByCinemaId"></collection>
+    </resultMap>
+
+    <!-- 查询所有影院信息 -->
+    <select id="findCinema" parameterType="Long" resultType="SysCinema">
+        select * from sys_cinema
+    </select>
+
+    <!-- 更新影院信息 -->
+    <update id="updateCinema" parameterType="SysCinema">
+        update sys_cinema set
+        cinema_name = #{cinemaName},       <!-- 影院名称 -->
+        cinema_picture = #{cinemaPicture}, <!-- 影院图片 -->
+        cinema_address = #{cinemaAddress}, <!-- 影院地址 -->
+        cinema_phone = #{cinemaPhone},     <!-- 影院电话 -->
+        work_start_time = #{workStartTime},<!-- 影院营业开始时间 -->
+        work_end_time = #{workEndTime},    <!-- 影院营业结束时间 -->
+        hall_category_list = #{hallCategoryList} <!-- 影院的影厅类别列表 -->
+        where cinema_id = #{cinemaId}      <!-- 通过影院ID来更新 -->
+    </update>
+
+    <!-- 根据影院ID查询影院信息及其上映的所有电影信息 -->
+    <select id="findCinemaById" parameterType="Long" resultMap="SysCinemaMap">
+        select * from sys_cinema where cinema_id = #{id}
+    </select>
+
+</mapper>
+<!--        详细说明：-->
+<!--<resultMap id="SysCinemaMap" type="SysCinema">:-->
+
+<!--用于将数据库查询的结果映射到 SysCinema 对象。-->
+<!--SysCinema 类包含多个属性，如 cinemaId（影院ID）、cinemaName（影院名称）等，映射了表中对应的列。-->
+<!--sysMovieList 使用了 MyBatis 的嵌套查询 (<collection>) 获取与该影院相关的电影信息（通过 findMovieByCinemaId 查询）。-->
+<!--    <select id="findCinema" parameterType="Long" resultType="SysCinema">:-->
+
+<!--        查询所有影院信息，并将结果映射到 SysCinema 类。-->
+<!--        没有使用查询条件，直接返回所有的影院记录。-->
+<!--        <update id="updateCinema" parameterType="SysCinema">:-->
+
+<!--            用于更新影院的信息。-->
+<!--            根据传入的 SysCinema 对象中的属性，生成 UPDATE 语句更新影院信息。-->
+<!--            通过 cinemaId 来确定更新的目标影院。-->
+<!--            <select id="findCinemaById" parameterType="Long" resultMap="SysCinemaMap">:-->
+
+<!--            根据影院ID查询某个特定影院的信息，并通过 resultMap 映射将查询结果返回。-->
+<!--包含影院的基本信息以及上映的电影信息。-->
+<!--主要功能：-->
+<!--该文件主要是影院相关信息的数据库操作。-->
+<!--包含了查询所有影院、查询单个影院、更新影院信息的SQL语句。-->
+<!--通过 resultMap 和嵌套查询将影院的基本信息以及上映的电影列表返回到 SysCinema 对象中。-->
+<!--通过这些注释，可以帮助开发人员更清楚地理解每个 SQL 语句的功能以及如何映射和处理数据。-->

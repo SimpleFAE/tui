@@ -1,0 +1,63 @@
+import React from 'react';
+
+const SystemArchitecture = () => {
+  return (
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="bg-yellow-100 py-4 px-6 rounded-t-lg">
+        <h2 className="text-xl font-bold">系统架构 - 框架图</h2>
+      </div>
+      <div className="grid grid-cols-2 gap-4 p-6 border rounded-b-lg">
+        <div>
+          <h3 className="font-bold mb-2">客户端</h3>
+          <div className="bg-orange-100 p-4 rounded">小博子影院</div>
+        </div>
+        <div>
+          <h3 className="font-bold mb-2">运行支持层</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-orange-100 p-4 rounded">HTTP/DNS</div>
+            <div className="bg-orange-100 p-4 rounded">IPS/SLB</div>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-bold mb-2">API网关层</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-orange-100 p-4 rounded">APP前置</div>
+            <div className="bg-orange-100 p-4 rounded">H5前置</div>
+            <div className="bg-orange-100 p-4 rounded">后台服务API</div>
+            <div className="bg-orange-100 p-4 rounded">其他服务API</div>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-bold mb-2">应用层</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-green-100 p-4 rounded">电影管理服务</div>
+            <div className="bg-green-100 p-4 rounded">订单管理服务</div>
+            <div className="bg-green-100 p-4 rounded">电影分类服务</div>
+            <div className="bg-green-100 p-4 rounded">售票服务</div>
+            <div className="bg-green-100 p-4 rounded">选座服务</div>
+            <div className="bg-green-100 p-4 rounded">电影营销服务</div>
+            <div className="bg-green-100 p-4 rounded">电影楼单服务</div>
+            <div className="bg-green-100 p-4 rounded">其他服务</div>
+            <div className="bg-green-100 p-4 rounded">影院管理服务</div>
+            <div className="bg-green-100 p-4 rounded">电影档期服务</div>
+            <div className="bg-green-100 p-4 rounded">其他服务</div>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-bold mb-2">数据层</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-purple-100 p-4 rounded">Redis</div>
+            <div className="bg-purple-100 p-4 rounded">MySql</div>
+            <div className="bg-purple-100 p-4 rounded">MongoDB</div>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-bold mb-2">用户鉴权</h3>
+          <div className="bg-red-100 p-4 rounded">用户鉴权</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SystemArchitecture;

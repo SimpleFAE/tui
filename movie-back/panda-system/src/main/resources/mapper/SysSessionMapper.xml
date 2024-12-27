@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panda.system.mapper.SysSessionMapper">
+    <!-- 定义了映射对象的结果映射关系 -->
+
+    <!-- ResultMap 用于将查询结果与 Java 对象之间的字段映射 -->
+    <!-- SysSessionResult 映射了 sys_session 表与 SysSession 类的属性 -->
+    <resultMap id="SysSessionResult" type="SysSession">
+        <id property="sessionId" column="session_id"></id> <!-- 主键映射 -->
+        <result property="hallId" column="hall_id"></result> <!-- 映射影厅ID -->
+        <result property="movieId" column="movie_id"></result> <!-- 映射电影ID -->
+        <result property="languageVersion" column="language_version"></result> <!-- 映射语言版本 -->
+        <result property="playTime" column="play_time"></result> <!-- 映射放映时间 -->
+        <result property="endTime" column="end_time"></result> <!-- 映射结束时间 -->
+        <result property="sessionDate" column="session_date"></result> <!-- 映射场次日期 -->
+        <result property="sessionPrice" column="session_price"></result> <!-- 映射票价 -->
+        <result property="sessionSeats" column="session_seats"></result> <!-- 映射座位信息 -->
+        <result property="sessionTips" column="session_tips"></result> <!-- 映射场次提示 -->
+        <result property="seatNums" column="seat_nums"></result> <!-- 映射座位数量 -->
+        <!-- 关联查询映射，查询关联的影厅和电影信息 -->
+        <association property="sysHall" column="hallId=hall_id" select="com.panda.system.mapper.SysHallMapper.findHallById"></association>
+        <association property="sysMovie" column="movie_id" select="com.panda.system.mapper.SysMovieMapper.findMovieById"></association>
+    </resultMap>
+
+    <!-- 第二个 resultMap，适用于查询时只关心简单的 SysSession 数据 -->
+    <resultMap id="SysSessionMap" type="SysSession">
+        <id property="sessionId" column="session_id"></id>
+        <result property="hallId" column="hall_id"></result>
+        <result property="languageVersion" column="language_version"></result>
+        <result property="movieId" column="movie_id"></result>
+        <result property="playTime" column="play_time"></result>
+        <result property="endTime" column="end_time"></result>
+        <result property="sessionDate" column="session_date"></result>
+        <result property="sessionPrice" column="session_price"></result>
+        <result property="sessionSeats" column="session_seats"></result>
+        <result property="sessionTips" column="session_tips"></result>
+        <result property="seatNums" column="seat_nums"></result>
+        <!-- 关联查询映射，查询影厅详细信息 -->
+        <association property="sysHall">
+            <result property="hallId" column="hall_id"></result>
+            <result property="hallName" column="hall_name"></result>
+            <result property="rowStart" column="row_start"></result>
+            <result property="rowNums" column="row_nums"></result>
+            <result property="seatNumsRow" column="seat_nums_row"></result>
+            <result property="seatNums" column="seat_nums"></result>
+            <result property="seatState" column="seat_state"></result>
+        </association>
+    </resultMap>
+
+    <!-- 查询场次信息，按条件筛选 -->
+    <select id="findByVo" parameterType="SysSessionVo" resultMap="SysSessionResult">
+        select * from sys_session se
+        <where>
+            se.del_state = 0
+            <if test="hallId != null and hallId != 0">
+                and se.hall_id = #{hallId}
+            </if>
+            <if test="movieId != null and movieId != 0">
+                and se.movie_id = #{movieId}
+            </if>
+            <if test="sessionDate != null">
+                and se.session_date = #{sessionDate}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据电影ID或影厅ID查询场次 -->
+    <select id="findSessionByMovieIdOrHallId" parameterType="SysSession" resultMap="SysSessionMap">
+        select * from sys_session
+        <where>
+            del_state = 0 and deadline &gt; SYSDATE()
+            <if test="hallId != null and hallId != 0">and hall_id = #{hallId} </if>
+            <if test="movieId != null and movieId != 0">and movie_id = #{movieId} </if>
+        </where>
+    </select>
+
+    <!-- 根据场次ID查询场次信息 -->
+    <select id="findSessionById" parameterType="long" resultMap="SysSessionResult">
+        select * from sys_session where session_id = #{id}
+    </select>
+
+    <!-- 查询一个场次（不关联其他信息） -->
+    <select id="findOneSession" parameterType="long" resultType="SysSession">
+        select * from sys_session where session_id = #{id}
+    </select>
+
+    <!-- 添加一个新的场次 -->
+    <update id="addSession" parameterType="SysSession">
+        insert into sys_session(
+        hall_id, language_version, movie_id, play_time, end_time, deadline, session_date, session_price,
+        <if test="sessionTips != null and sessionTips != ''">session_tips, </if>
+        session_seats, seat_nums
+        ) values(
+        #{hallId}, #{languageVersion}, #{movieId}, #{playTime}, #{endTime}, #{deadline}, #{sessionDate}, #{sessionPrice},
+        <if test="sessionTips != null and sessionTips != ''">#{sessionTips}, </if>
+        #{sessionSeats}, #{seatNums}
+        )
+    </update>
+
+    <!-- 更新场次信息 -->
+    <update id="updateSession" parameterType="SysSession">
+        update sys_session
+        <set>
+            <if test="hallId != null and hallId != 0">hall_id = #{hallId},</if>
+            <if test="languageVersion != null and languageVersion != ''">language_version = #{languageVersion},</if>
+            <if test="movieId != null and movieId != 0">movie_id = #{movieId},</if>
+            <if test="playTime != null">play_time = #{playTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="deadline != null">deadline = #{deadline},</if>
+            <if test="sessionDate != null">session_date = #{sessionDate},</if>
+            <if test="sessionPrice != null and sessionPrice >= 0">session_price = #{sessionPrice},</if>
+            <if test="sessionTips != null and sessionTips != ''">session_tips = #{sessionTips},</if>
+            <if test="sallNums != null and sallNums != ''">sall_nums = #{sallNums},</if>
+            <if test="sessionSeats != null">session_seats = #{sessionSeats},</if>
+            <if test="seatNums != null">seat_nums = #{seatNums}</if>
+        </set>
+        where session_id = #{sessionId}
+    </update>
+
+    <!-- 删除场次 -->
+    <delete id="deleteSession" parameterType="long">
+        DELETE FROM sys_session WHERE session_id = #{sessionId}
+    </delete>
+
+    <!-- 查询指定电影的未来五天上映的场次信息 -->
+    <select id="findSessionByMovieId" resultMap="SysSessionMap">
+        select ss.*, sh.* from sys_movie sm
+                                   join sys_session ss on sm.movie_id = ss.movie_id
+                                   join sys_hall sh on ss.hall_id = sh.hall_id
+        where sm.movie_id = #{movieId}
+          and ss.session_date &gt;= CURDATE() and ss.session_date &lt; ADDDATE(curdate(),5)
+        order by session_date
+    </select>
+
+</mapper>
+<!--        主要部分：-->
+<!--        resultMap:-->
+
+<!--        用于定义 SQL 查询结果和 Java 对象字段的映射关系。SysSessionResult 和 SysSessionMap 是两种不同的映射方式。SysSessionResult 用于包含外部关联查询（例如关联影厅和电影信息），而 SysSessionMap 适用于更简单的场次信息。-->
+<!--<select>:-->
+
+<!--负责查询操作，返回一个或多个场次信息。例如 findByVo 方法根据不同条件进行查询，findSessionByMovieId 方法查询未来5天内的场次。-->
+<!--<update>:-->
+
+<!--    用于更新场次信息的 SQL 语句。例如 addSession 用于插入新的场次信息，updateSession 用于更新现有场次。-->
+<!--    <delete>:-->
+
+<!--        删除场次信息，deleteSession 方法根据 sessionId 删除对应的场次。-->
+<!--        重点：-->
+<!--        动态 SQL：使用 <if> 标签实现动态 SQL 构建，例如条件判断是否传入 hallId 或 movieId，从而决定是否加入 SQL 查询的 WHERE 条件。-->
+<!--            日期条件：如在 findSessionByMovieId 查询中，使用 CURDATE() 和 ADDDATE() 来限制场次的时间范围-->

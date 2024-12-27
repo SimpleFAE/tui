@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panda.system.mapper.SysRoleMapper">
+
+    <!--
+    查询角色信息及角色对应的权限信息。
+    通过 resultMap 将查询结果映射到 SysRole 类，包含了角色的基本信息和与该角色关联的权限列表。
+    -->
+    <resultMap id="SysRoleMap" type="SysRole">
+        <!-- 角色ID -->
+        <id property="roleId" column="role_id"></id>
+        <!-- 角色名称 -->
+        <result property="roleName" column="role_name"></result>
+        <!-- 角色描述 -->
+        <result property="roleDesc" column="role_desc"></result>
+        <!-- 角色的子权限列表 -->
+        <collection property="children" column="role_id" ofType="SysResource" select="com.panda.system.mapper.SysRoleMapper.findByRoleId">
+        </collection>
+    </resultMap>
+
+    <!--
+    查询单个权限的详细信息，及其下的子权限。
+    使用嵌套查询映射权限数据，其中分为三级目录（权限层级）。
+    -->
+    <resultMap id="OneRoleMap" type="SysResource">
+        <!-- 权限ID -->
+        <id property="id" column="resource_id"></id>
+        <!-- 权限名称 -->
+        <result property="name" column="resource_name"></result>
+        <!-- 权限路径 -->
+        <result property="path" column="path"></result>
+        <!-- 权限等级 -->
+        <result property="level" column="level"></result>
+        <!-- 父级权限ID -->
+        <result property="parentId" column="parent_id"></result>    <!-- 一级目录 -->
+        <!-- 嵌套查询，获取子权限 -->
+        <collection property="children" column="resource_id" ofType="SysResource">
+            <id property="id" column="sid"></id>
+            <result property="name" column="sname"></result>
+            <result property="path" column="spath"></result>
+            <result property="level" column="slevel"></result>
+            <result property="parentId" column="sparent_id"></result>    <!-- 二级目录 -->
+            <!-- 进一步嵌套查询，获取三级权限 -->
+            <collection property="children" column="resource_id" ofType="SysResource">
+                <id property="id" column="gsid"></id>
+                <result property="name" column="gsname"></result>
+                <result property="path" column="gspath"></result>
+                <result property="level" column="gslevel"></result>
+                <result property="parentId" column="gsparent_id"></result>    <!-- 三级权限 -->
+            </collection>
+        </collection>
+    </resultMap>
+
+    <!-- 查询所有角色 -->
+    <select id="findAllRoles" resultMap="SysRoleMap">
+        select * from sys_role sysr
+    </select>
+
+    <!-- 根据角色ID查询该角色的所有权限 -->
+    <select id="findByRoleId" resultMap="OneRoleMap" parameterType="Long">
+        select resources.* from sys_role sysr
+                                    left join sys_role_resource srr on sysr.role_id = srr.role_id
+                                    left join
+                                (select sr.*, sr1.resource_id sid, sr1.resource_name sname, sr1.path spath, sr1.level slevel, sr1.parent_id sparent_id,
+                                        sr2.resource_id gsid, sr2.resource_name gsname, sr2.path gspath, sr2.level gslevel, sr2.parent_id gsparent_id from sys_resource sr
+                                                                                                                                                               left join sys_resource sr1 on sr1.parent_id = sr.resource_id
+                                                                                                                                                               left join sys_resource sr2 on sr2.parent_id = sr1.resource_id
+                                 where sr.level = 1) resources on srr.resource_id = resources.gsid where sysr.role_id = #{id}
+    </select>
+
+    <!-- 根据角色ID查询角色详细信息 -->
+    <select id="findRoleById" resultType="SysRole" parameterType="long">
+        select * from sys_role where role_id = #{id}
+    </select>
+
+    <!-- 添加角色 -->
+    <update id="addRole" parameterType="SysRole">
+        insert into sys_role(role_name, role_desc) values(#{roleName}, #{roleDesc})
+    </update>
+
+    <!-- 更新角色 -->
+    <update id="updateRole" parameterType="SysRole">
+        update sys_role set role_name = #{roleName}, role_desc = #{roleDesc} where role_id = #{roleId}
+    </update>
+
+    <!-- 删除角色 -->
+    <update id="deleteRole" parameterType="Long">
+        delete from sys_role where role_id = #{id}
+    </update>
+
+    <!--
+    分配权限给角色
+    将角色ID和权限ID插入到中间表 sys_role_resource 中
+    -->
+    <update id="addRight">
+        insert into sys_role_resource values(#{roleId}, #{resourceId})
+    </update>
+
+    <!--
+    删除角色的权限
+    删除角色与指定权限的关联记录
+    -->
+    <update id="deleteRight">
+        delete from sys_role_resource where role_id = #{roleId} and resource_id = #{resourceId}
+    </update>
+
+    <!-- 查询指定角色的所有权限ID -->
+    <select id="findAllRights" resultType="Long" parameterType="Long">
+        select resource_id id from sys_role_resource where role_id = #{roleId}
+    </select>
+
+</mapper>
+
+<!--        详细说明：-->
+<!--<resultMap id="SysRoleMap" type="SysRole">:-->
+
+<!--用于将查询的角色信息映射到 SysRole 类，其中包括角色的基本信息（如 roleId, roleName, roleDesc）以及角色所拥有的子权限列表（children），这些权限会通过 findByRoleId 进行查询。-->
+<!--<resultMap id="OneRoleMap" type="SysResource">:-->
+
+<!--    用于映射权限信息（SysResource），并且使用嵌套查询处理权限的层级关系（一级目录、二级目录、三级权限）。这样可以在查询角色的权限时，同时获取多级目录结构。-->
+<!--    <select id="findAllRoles" resultMap="SysRoleMap">:-->
+
+<!--        查询所有角色的信息并映射到 SysRole 对象。-->
+<!--        <select id="findByRoleId" resultMap="OneRoleMap" parameterType="Long">:-->
+
+<!--            根据角色ID查询角色所拥有的所有权限。使用左连接查询的方式，将权限信息与角色关联，且通过多次嵌套查询返回多级权限信息。-->
+<!--            <select id="findRoleById" resultType="SysRole" parameterType="long">:-->
+
+<!--                根据角色ID查询单个角色的基本信息。-->
+<!--                <update id="addRole" parameterType="SysRole">:-->
+
+<!--                    插入新角色的操作，包含角色名称和描述。-->
+<!--                    <update id="updateRole" parameterType="SysRole">:-->
+
+<!--                        更新角色的信息，主要更新角色名称和描述。-->
+<!--                        <update id="deleteRole" parameterType="Long">:-->
+
+<!--                            删除指定角色的操作，使用角色ID来删除角色。-->
+<!--                            <update id="addRight">:-->
+
+<!--                                将角色与权限关联，即为指定角色分配权限。-->
+<!--                                <update id="deleteRight">:-->
+
+<!--                                    删除角色与权限之间的关联，取消指定角色的权限。-->
+<!--                                    <select id="findAllRights" resultType="Long" parameterType="Long">:-->
+
+<!--                                    查询某个角色所有的权限ID，返回该角色拥有的权限列表。-->
+<!--总结：-->
+<!--该文件主要负责角色与权限的管理。包括角色的创建、更新、删除操作，及其与权限的分配和撤销。通过 resultMap 和嵌套查询方式，能够处理多级权限的结构，确保每个角色所拥有的权限及其层级能够正确映射到系统中-->

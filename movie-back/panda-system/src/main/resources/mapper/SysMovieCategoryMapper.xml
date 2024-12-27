@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panda.system.mapper.SysMovieCategoryMapper">
+    <!-- 查询所有电影分类 -->
+    <select id="findAllCategorys" resultType="SysMovieCategory">
+        select * from sys_movie_category
+    </select>
+
+    <!-- 根据ID查询电影分类 -->
+    <select id="findCategoryById" resultType="SysMovieCategory" parameterType="long">
+        select * from sys_movie_category where movie_category_id = #{id}
+    </select>
+
+    <!-- 根据电影ID查询所属分类 -->
+    <select id="findOneMovieCategorys" resultType="SysMovieCategory" parameterType="long">
+        select * from sys_movie_category smc, sys_movie_to_category smtc
+        where smc.movie_category_id = smtc.movie_category_id and movie_id = #{id}
+    </select>
+
+    <!-- 添加电影分类 -->
+    <update id="addCategory" parameterType="SysMovieCategory">
+        insert into sys_movie_category(movie_category_name) values(#{movieCategoryName})
+    </update>
+
+    <!-- 更新电影分类 -->
+    <update id="updateCategory" parameterType="SysMovieCategory">
+        update sys_movie_category set movie_category_name = #{movieCategoryName} where movie_category_id = #{movieCategoryId}
+    </update>
+
+    <!-- 删除电影分类 -->
+    <update id="deleteCategory" parameterType="Long">
+        delete from sys_movie_category where movie_category_id = #{movieCategoryId}
+    </update>
+
+    <!-- 将电影添加到分类 -->
+    <update id="addMovieToCategory" parameterType="SysMovieToCategory">
+        insert into sys_movie_to_category values(#{movieId}, #{movieCategoryId})
+    </update>
+
+    <!-- 删除电影与分类的关联 -->
+    <update id="deleteMovieToCategory" parameterType="SysMovieToCategory">
+        delete from sys_movie_to_category where movie_id = #{movieId} and movie_category_id = #{movieCategoryId}
+    </update>
+
+    <!-- 获取电影分类统计信息 -->
+    <select id="getCategoryStatistics" resultType="java.util.Map">
+        SELECT
+            smc.movie_category_name as name,
+            COALESCE(
+                    (
+                        SELECT COUNT(1)
+                        FROM sys_movie_to_category smtc
+                        WHERE smtc.movie_category_id = smc.movie_category_id
+                    ), 0
+                ) as value
+        FROM sys_movie_category smc
+        GROUP BY smc.movie_category_id, smc.movie_category_name
+        ORDER BY value DESC, smc.movie_category_id ASC
+    </select>
+</mapper>
+<!--        详细解析：-->
+<!--        查询所有电影分类 (findAllCategorys):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<select id="findAllCategorys" resultType="SysMovieCategory">-->
+<!--select * from sys_movie_category-->
+<!--</select>-->
+<!--        id="findAllCategorys": 映射到 Java 接口中的 findAllCategorys() 方法。-->
+<!--        resultType="SysMovieCategory": 查询结果会映射成 SysMovieCategory 类型的对象。-->
+<!--        查询 sys_movie_category 表，返回所有的电影分类。-->
+<!--        根据 ID 查询电影分类 (findCategoryById):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<select id="findCategoryById" resultType="SysMovieCategory" parameterType="long">-->
+<!--select * from sys_movie_category where movie_category_id = #{id}-->
+<!--</select>-->
+<!--        id="findCategoryById": 映射到 Java 接口中的 findCategoryById(Long id) 方法。-->
+<!--        parameterType="long": 传入的参数是 long 类型，即电影分类的 ID。-->
+<!--        根据传入的 id 查找对应的电影分类。-->
+<!--        根据电影 ID 查询电影所属分类 (findOneMovieCategorys):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<select id="findOneMovieCategorys" resultType="SysMovieCategory" parameterType="long">-->
+<!--select * from sys_movie_category smc, sys_movie_to_category smtc-->
+<!--where smc.movie_category_id = smtc.movie_category_id and movie_id = #{id}-->
+<!--</select>-->
+<!--        id="findOneMovieCategorys": 映射到 Java 接口中的 findOneMovieCategorys(Long id) 方法。-->
+<!--        parameterType="long": 传入的参数是电影 ID。-->
+<!--        查询 sys_movie_to_category 表，查找该电影 ID 所在的所有分类，并返回相关分类信息。-->
+<!--        添加电影分类 (addCategory):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<update id="addCategory" parameterType="SysMovieCategory">-->
+<!--insert into sys_movie_category(movie_category_name) values(#{movieCategoryName})-->
+<!--</update>-->
+<!--        id="addCategory": 映射到 Java 接口中的 addCategory(SysMovieCategory sysMovieCategory) 方法。-->
+<!--        parameterType="SysMovieCategory": 参数类型是 SysMovieCategory 对象，表示电影分类的实体。-->
+<!--        向 sys_movie_category 表插入新的分类记录。-->
+<!--        更新电影分类 (updateCategory):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<update id="updateCategory" parameterType="SysMovieCategory">-->
+<!--update sys_movie_category set movie_category_name = #{movieCategoryName} where movie_category_id = #{movieCategoryId}-->
+<!--</update>-->
+<!--        id="updateCategory": 映射到 Java 接口中的 updateCategory(SysMovieCategory sysMovieCategory) 方法。-->
+<!--        更新指定 ID 的电影分类名称。-->
+<!--        删除电影分类 (deleteCategory):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<update id="deleteCategory" parameterType="Long">-->
+<!--delete from sys_movie_category where movie_category_id = #{movieCategoryId}-->
+<!--</update>-->
+<!--        id="deleteCategory": 映射到 Java 接口中的 deleteCategory(Long id) 方法。-->
+<!--        parameterType="Long": 传入参数是 Long 类型的电影分类 ID。-->
+<!--        删除指定 ID 的电影分类。-->
+<!--        将电影添加到分类 (addMovieToCategory):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<update id="addMovieToCategory" parameterType="SysMovieToCategory">-->
+<!--insert into sys_movie_to_category values(#{movieId}, #{movieCategoryId})-->
+<!--</update>-->
+<!--        id="addMovieToCategory": 映射到 Java 接口中的 addMovieToCategory(SysMovieToCategory sysMovieToCategory) 方法。-->
+<!--        将电影与分类的关联信息插入到 sys_movie_to_category 表中。-->
+<!--        删除电影与分类的关联 (deleteMovieToCategory):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<update id="deleteMovieToCategory" parameterType="SysMovieToCategory">-->
+<!--delete from sys_movie_to_category where movie_id = #{movieId} and movie_category_id = #{movieCategoryId}-->
+<!--</update>-->
+<!--        id="deleteMovieToCategory": 映射到 Java 接口中的 deleteMovieToCategory(SysMovieToCategory sysMovieToCategory) 方法。-->
+<!--        删除电影与分类之间的关联记录。-->
+<!--        获取电影分类统计信息 (getCategoryStatistics):-->
+
+<!--        xml-->
+<!--        复制代码-->
+<!--<select id="getCategoryStatistics" resultType="java.util.Map">-->
+<!--SELECT-->
+<!--    smc.movie_category_name as name,-->
+<!--    COALESCE(-->
+<!--            (-->
+<!--                SELECT COUNT(1)-->
+<!--                FROM sys_movie_to_category smtc-->
+<!--                WHERE smtc.movie_category_id = smc.movie_category_id-->
+<!--            ), 0-->
+<!--        ) as value-->
+<!--FROM sys_movie_category smc-->
+<!--GROUP BY smc.movie_category_id, smc.movie_category_name-->
+<!--ORDER BY value DESC, smc.movie_category_id ASC-->
+<!--</select>-->
+<!--        id="getCategoryStatistics": 映射到 Java 接口中的 getCategoryStatistics() 方法。-->
+<!--        resultType="java.util.Map": 返回结果是 Map<String, Object> 类型，用于存储统计信息。-->
+<!--        查询每个电影分类的电影数量，并按照电影数量降序排列。没有电影的分类将返回 0（使用 COALESCE 函数确保没有统计数据时显示为 0）。-->
+<!--        总结：-->
+<!--<select>: 用于查询操作，返回结果集。-->
+<!--<update>: 用于执行插入、更新或删除操作，成功执行后返回受影响的行数。-->
+<!--getCategoryStatistics: 查询每个分类下的电影数量，并对分类进行排序。-->
+<!--通过这些 SQL 语句和 MyBatis 映射，Java 代码能够与数据库进行有效的交互，实现电影分类的增删改查功能以及统计数据的查询。-->
+

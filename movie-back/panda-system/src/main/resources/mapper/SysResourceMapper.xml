@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  Mapper 文件：这个文件是 MyBatis 的映射文件，定义了 SQL 查询、插入、更新和删除等操作
+  该文件用于将数据库表中的数据映射到 Java 对象中，以及将 Java 对象的变化同步到数据库中。
+  本映射文件与 `com.panda.system.mapper.SysResourceMapper` 接口对应。
+-->
+
+<mapper namespace="com.panda.system.mapper.SysResourceMapper">
+    <!--
+      结果映射部分：定义了如何将查询结果映射到 Java 对象中
+    -->
+
+    <!--
+      findAllMap：用于查询所有资源，并包括其父资源的信息
+      `SysResource` 是 Java 对象类型，表示数据库中的 `sys_resource` 表中的记录。
+      `<id>` 用来标记主键字段，`<result>` 用来映射普通字段，`<association>` 用来映射父级资源（关联关系）。
+    -->
+    <resultMap id="findAllMap" type="SysResource">
+        <!-- 映射资源的ID字段 -->
+        <id property="id" column="resource_id"></id>
+        <!-- 映射资源的名称字段 -->
+        <result property="name" column="resource_name"></result>
+        <!-- 映射资源的路径字段 -->
+        <result property="path" column="path"></result>
+        <!-- 映射资源的权限等级字段 -->
+        <result property="level" column="level"></result>
+        <!-- 映射资源的父级ID字段 -->
+        <result property="parentId" column="parent_id"></result>
+
+        <!-- 映射父资源（parent）的字段 -->
+        <association property="parent" column="parent_id">
+            <id property="id" column="cid"></id>
+            <result property="name" column="cname"></result>
+            <result property="path" column="cpath"></result>
+            <result property="level" column="level"></result>
+            <result property="parentId" column="cparent_id"></result>
+        </association>
+    </resultMap>
+
+    <!--
+      findWithChildrenMap：查询资源及其直接子资源，通常用于获取一级菜单及其子菜单
+      `<collection>` 用于映射资源的子菜单列表。
+    -->
+    <resultMap id="findWithChildrenMap" type="SysResource">
+        <!-- 映射资源本身的字段 -->
+        <id property="id" column="resource_id"></id>
+        <result property="name" column="resource_name"></result>
+        <result property="path" column="path"></result>
+        <result property="level" column="level"></result>
+        <result property="parentId" column="parent_id"></result>
+
+        <!-- 映射当前资源的子资源列表 -->
+        <collection property="children" column="resource_id" ofType="SysResource">
+            <id property="id" column="cid"></id>
+            <result property="name" column="cname"></result>
+            <result property="path" column="cpath"></result>
+            <result property="level" column="level"></result>
+            <result property="parentId" column="cparent_id"></result>
+        </collection>
+    </resultMap>
+
+    <!--
+      allChildrenMap：查询资源及其所有子资源（最多三级）。
+      通过多次 `LEFT JOIN`，查询资源的所有子级以及子级的子级，适用于多层级的资源结构。
+    -->
+    <resultMap id="allChildrenMap" type="SysResource">
+        <!-- 映射资源本身的字段 -->
+        <id property="id" column="resource_id"></id>
+        <result property="name" column="resource_name"></result>
+        <result property="path" column="path"></result>
+        <result property="level" column="level"></result>
+        <result property="parentId" column="parent_id"></result>
+
+        <!-- 映射第一级子资源 -->
+        <collection property="children" column="resource_id" ofType="SysResource">
+            <id property="id" column="sid"></id>
+            <result property="name" column="sname"></result>
+            <result property="path" column="spath"></result>
+            <result property="level" column="slevel"></result>
+            <result property="parentId" column="sparent_id"></result>
+
+            <!-- 映射第二级子资源 -->
+            <collection property="children" column="resource_id" ofType="SysResource">
+                <id property="id" column="gsid"></id>
+                <result property="name" column="gsname"></result>
+                <result property="path" column="gspath"></result>
+                <result property="level" column="gslevel"></result>
+                <result property="parentId" column="gsparent_id"></result>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <!--
+      SQL 查询部分：定义实际的 SQL 查询语句，这些查询与 `SysResourceMapper` 接口中的方法对应
+    -->
+
+    <!--
+      findAllResources：查询所有资源以及它们的父资源
+      使用 `LEFT JOIN` 将资源表 `sys_resource` 与其父资源关联。
+    -->
+    <select id="findAllResources" resultMap="findAllMap">
+        select sr.*, sr1.resource_id cid, sr1.resource_name cname, sr1.path cpath, sr1.parent_id cparent_id
+        from sys_resource sr
+                 left join sys_resource sr1
+                           on sr.parent_id = sr1.resource_id
+    </select>
+
+    <!--
+      findWithChildren：查询一级资源及其子资源
+      使用 `JOIN` 将当前资源和其直接子资源关联，`where sr.level = 1` 只查询一级资源。
+    -->
+    <select id="findWithChildren" resultMap="findWithChildrenMap">
+        select sr.*, sr1.resource_id cid, sr1.resource_name cname, sr1.level clevel, sr1.path cpath, sr1.parent_id cparent_id
+        from sys_resource sr
+                 join sys_resource sr1
+                      on sr.resource_id = sr1.parent_id
+        where sr.level = 1
+    </select>
+
+    <!--
+      findAllWithAllChildren：查询一级资源及其所有子资源，最多两级
+      使用多次 `LEFT JOIN` 来查询一级资源、二级资源及三级资源。
+    -->
+    <select id="findAllWithAllChildren" resultMap="allChildrenMap">
+        select sr.*, sr1.resource_id sid, sr1.resource_name sname, sr1.path spath, sr1.level slevel, sr1.parent_id sparent_id,
+               sr2.resource_id gsid, sr2.resource_name gsname, sr2.path gspath, sr2.level gslevel, sr2.parent_id gsparent_id
+        from sys_resource sr
+                 left join sys_resource sr1 on sr1.parent_id = sr.resource_id
+                 left join sys_resource sr2 on sr2.parent_id = sr1.resource_id
+        where sr.level = 1
+    </select>
+
+    <!--
+      findResourceById：根据 ID 查询资源及其父资源
+      使用 `LEFT JOIN` 查询资源及其父资源，`#{id}` 是传入的查询参数，表示查询特定 ID 的资源。
+    -->
+    <select id="findResourceById" resultMap="findAllMap" parameterType="long">
+        select sr.*, sr1.resource_id cid, sr1.resource_name cname, sr1.path cpath, sr1.level clevel, sr1.parent_id cparent_id
+        from sys_resource sr
+                 left join sys_resource sr1
+                           on sr.parent_id = sr1.resource_id
+        where sr.resource_id = #{id}
+    </select>
+
+    <!--
+      addResource：插入资源数据
+      使用 `INSERT INTO` 向 `sys_resource` 表中插入新记录。如果 `id` 不为 `null` 且不为 0，则将 `id` 一并插入。
+    -->
+    <update id="addResource" parameterType="SysResource">
+        insert into sys_resource(
+        <if test="id != null and id != 0">resource_id, </if>
+        resource_name, path, level, parent_id)
+        values(
+        <if test="id != null and id != 0">#{id}, </if>
+        #{name}, #{path}, #{level}, #{parentId})
+    </update>
+
+    <!--
+      updateResource：更新资源数据
+      使用 `UPDATE` 更新指定 ID 的资源记录，更新字段包括 `resource_name`、`path`、`level` 和 `parent_id`。
+    -->
+    <update id="updateResource" parameterType="SysResource">
+        update sys_resource
+        set resource_name = #{name}, path = #{path}, level = #{level}, parent_id = #{parentId}
+        where resource_id = #{id}
+    </update>
+
+    <!--
+      deleteResource：删除指定 ID 的资源记录
+      使用 `DELETE` 根据 `resource_id` 删除资源。
+    -->
+    <delete id="deleteResource" parameterType="long">
+        delete from sys_resource where resource_id = #{id}
+    </delete>
+
+</mapper>

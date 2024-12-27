@@ -1,0 +1,59 @@
+# Spring 配置
+spring:
+  # 数据源配置文件
+  profiles:
+    active: druid
+
+  # 开发工具，配置热部署
+  devtools:
+    restart:
+      enabled: true #热部署
+  freemarker:
+    cache: false #页面不开启缓存，修改即生效
+
+  # jackson日期格式配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  # mvc日期格式配置
+  mvc:
+    format:
+      date: yyyy-MM-dd
+      date-time: yyyy-MM-dd HH:mm:ss
+
+  # 文件上传大小限制
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+# Mybatis 配置
+mybatis:
+  type-aliases-package: com.panda.**.domin #指定封装到实体类的包，省去书写全类名
+  mapper-locations: classpath*:mapper/**/*Mapper.xml #mapper配置文件的位置
+  configuration:
+    map-underscore-to-camel-case: true #配置开启驼峰式命名
+
+# logging 日志配置
+logging:
+  level:
+    com.panda: trace
+    org.springframework: warn
+
+# pagehelper 分页插件配置
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+
+server:
+  port: 8181
+
+alipay:
+  appId: 9021000142622565
+  appPrivateKey: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQChEyRebCGeEpCz4eA68kBMlDix6SLlVKEKc+4aYLn/QAQhHXPJZynQCi/TbbJDG0qNxJGFVaG4XdDvdDdd/od8enN8JaF0FV5CX7QuNZ2blISj99tfzrur+o879FN515OybeixEL2GunWz71a21X+P3b6/DKidc39G80txmsKyCnLMpL4w3KXS2XyBbp+OJfbwPdazHwV1Vi72Ph8K47pEr+5rI0bC1QoZ+p4IPoD3EK3aX3USFhg1+uHUfvvqQy5qXta8CXMRxFz9Ymw6u3jxZeTMpOtt0OETJailtyKnI2EiAt2IPrWv0wESKRsomtD93mEHPnVQOqvSw34+/MPtAgMBAAECggEAQUGXD2XxbLAKzcWp6VexsxStr25LQ+u4Xpq/ERK05/NQePYMrcDM0Mr/u0GK4eMRnkPPzNv3a9EeT5SexcbTrxuQ4+/+7B+oE23geoQgOSK/ZgqJZtRDdhZJpzmCBC/RV41toyasEgRCoUZKtEHkry1gFNiVC0z6eI0iuIDBdg1cgDKeT7Nt+NH1k23Iyd1wqZx1gDZVQNDypacV+KT+pHUd7JPtpZbBDu6HiiL6O7X5clredw2EgK8Z6eBFphc3SFgGuZvnOGt6oSJaMMejaBdBsEelGbI+UjF9wpamzsckZjoDZecS7iczL5sGDgdu2gebltfZuIk1WZHsb/jAxQKBgQDyPtWFlQPb7kdo2Egm9OD7DstajA6lSbcAyVGHZNamgEIV3uwfi6oxlkLeaPsIP6umGb5MAG5p8tg8ERNP9P33gDlgmfajjOvxCnECIOZoIkN119cHIEdWGxDCiiiglqr25/XuLczDPr9N70ezo3KOyabfAd9Iuk4nhAxnwxlrcwKBgQCqOHMC8HdIuA4Tkfo98PWqSoNRifY0CdDNZ4UmHmkHS8r96affoS9aFZfFjhicLpgwMlyFpA58cOY08dMr7jRHpb6IyyV6lLzur6meSnKwOE+MtKxdEDsz8BIzGMkWg+wJt9zYXjXjxjj9tT3Gu409Ee+LhgI7MHQ8d+l8TXX7HwKBgQCF1CzGJbMCF7ufsoz56KM6T8wMc//LVNQjPRUrhYwIZCceSg+Mxe36gxbiJIE652H+244EEuDs61qGpLBUpfaAe3g3ZBeb90iJ28je8ioYMYWvXtTOfQisCzvRHd6gCVzeFvwI34iV/N5XQfAM0CmDtOfZoAEo/rQapJrt4Bz0/QKBgH7FxdpVjvEoqssmd/GzyLLIBd8vWZ7OBKVFyONn2J7ncsoCP9WMbQCxfjRSrL988DlM+J1LXsKNLtYVmElqgaMurKWibkpKBh/Z0gCiv6HAfnZzhL9WvFDlJhjKB9Ft9NgUCDVYjNgTpBRH7DdbLUhjWD1YU8cTQi5avBiodArPAoGBAKy/r+eGQ+rKxRX9qmdvzg0+6Hmkx7eP/0j2aBfM8aKAKXO8X8mJXVQlkO/UilxSVb0C/FtE//0M7X9oNxET2keH1Hkx+fIC9NUuHBGd4vqGPJAsEMwVIK5qCg/IiOHIxKOHYj+Vyz1aJ3FfCkUr7mPNKZCG1fNaz2JZbsIFKPZs
+  alipayPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2vpsV7hS9r8rQie/VGTdqn+TnnE5/KsbGeoEzwKKPQ2nP/3mi3ifYIN+USw+BhxqC4xErrU6nImyPVpyHr8tB1RZ7iPbeg+FneDWzy/piQQM/dX3JL+PKdIaW60PF7k9bHDFHcZAXp5SaPvikz26n+P6IPaDoYxh404sygUArfpln5Gon702wb36BORUeosgbB1V1XA0ZPxNLchSfZhfpLIo1gAOqLbJtQRf5e60U/eNzNqMeUgLTvGyGbYTgEquv1QWv7HFJ56DppjC+9MB4uPP0Hc7Nkgik1OHS5bsbMdrN60L5JYWAu60dUtSCs+Fgo9Z9iaj3I1aJPRczpcxAwIDAQAB
+  notifyUrl: http://jmiqd2.natappfree.cc/alipay/notify

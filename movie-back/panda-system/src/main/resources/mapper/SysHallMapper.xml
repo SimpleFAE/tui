@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panda.system.mapper.SysHallMapper">
+
+    <!-- 定义 SysHall 的 resultMap，将查询结果映射为 SysHall 对象 -->
+    <resultMap id="sysHallMap" type="SysHall">
+        <!-- 映射 hall_id 列到 hallId 属性 -->
+        <result property="hallId" column="hall_id"></result>
+        <!-- 映射 cinema_id 列到 cinemaId 属性 -->
+        <result property="cinemaId" column="cinema_id"></result>
+        <!-- 使用关联查询，将 cinema_id 映射到 sysCinema 属性，使用 com.panda.system.mapper.SysCinemaMapper.findCinema 查询 -->
+        <association property="sysCinema" column="cinema_id" select="com.panda.system.mapper.SysCinemaMapper.findCinema"></association>
+    </resultMap>
+
+    <!-- 查询所有影厅，根据传入的 SysHall 对象的属性进行筛选 -->
+    <select id="findAllHalls" resultMap="sysHallMap" parameterType="SysHall">
+        select * from sys_hall
+        <where>
+            <!-- 只查询未删除的影厅 -->
+            del_state = 0
+            <!-- 如果传入了影厅名称，则按名称模糊查询 -->
+            <if test="hallName != null and hallName != ''">
+                and hall_name like concat ('%', #{hallName}, '%')
+            </if>
+            <!-- 如果传入了影厅类别，则按类别精确查询 -->
+            <if test="hallCategory != null and hallCategory != ''">
+                and hall_category = #{hallCategory}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据影厅ID查询单个影厅 -->
+    <select id="findHallById" parameterType="SysHall" resultMap="sysHallMap">
+        select * from sys_hall where hall_id = #{hallId}
+    </select>
+
+    <!-- 添加新的影厅 -->
+    <update id="addHall" parameterType="SysHall">
+        insert into sys_hall
+        (hall_name, hall_category, row_start, row_nums, seat_nums_row, seat_nums, seat_state)
+        values
+            (#{hallName}, #{hallCategory},
+             #{rowStart}, #{rowNums}, #{seatNumsRow}, #{seatNums}, #{seatState})
+    </update>
+
+    <!-- 更新影厅信息 -->
+    <update id="updateHall" parameterType="SysHall">
+        update sys_hall set
+        hall_name = #{hallName}, <!-- 更新影厅名称 -->
+        hall_category = #{hallCategory}, <!-- 更新影厅类别 -->
+        row_start = #{rowStart}, <!-- 更新排号开始标识 -->
+        row_nums = #{rowNums}, <!-- 更新影厅排数 -->
+        seat_nums_row = #{seatNumsRow}, <!-- 更新每排座位数 -->
+        seat_nums = #{seatNums}, <!-- 更新总座位数 -->
+        seat_state = #{seatState} <!-- 更新座位状态 -->
+        where hall_id = #{hallId} <!-- 根据影厅ID进行更新 -->
+    </update>
+
+    <!-- 删除影厅（实际是标记为已删除，del_state = 1） -->
+    <update id="deleteHall" parameterType="SysHall">
+        update sys_hall set del_state = 1 where hall_id = #{hallId}
+    </update>
+
+</mapper>
+<!--        代码解析：-->
+<!--        resultMap：-->
+
+<!--        resultMap 用于将查询结果映射到 SysHall 对象中，处理数据库返回的每一列（如 hall_id、cinema_id）和 Java 对象的属性之间的映射关系。-->
+<!--        association 元素用于执行与 SysCinema 表的关联查询，通过 cinema_id 关联到 SysCinemaMapper 中的 findCinema 查询，自动填充 SysCinema 对象。-->
+<!--        findAllHalls：-->
+
+<!--        这个查询会返回所有的影厅信息，可以根据条件筛选影厅，比如影厅名称和类别。del_state = 0 表示只查询未删除的影厅。-->
+<!--        如果传入了 hallName 或 hallCategory，则会进行模糊查询或者精确查询。-->
+<!--        findHallById：-->
+
+<!--        根据影厅ID查询指定的影厅，返回一个 SysHall 对象。-->
+<!--        addHall：-->
+
+<!--        通过 insert 语句将新的影厅数据插入到数据库中。插入的字段包括影厅名称、类别、排号、排数、座位数等。-->
+<!--        updateHall：-->
+
+<!--        使用 update 语句更新影厅信息，更新的字段包括影厅名称、类别、座位数等。通过 hallId 定位要更新的影厅。-->
+<!--        deleteHall：-->
+
+<!--        逻辑删除影厅，将 del_state 设置为 1，表示影厅已被删除。通过 hallId 定位要删除的影厅。-->
+<!--        总结：-->
+<!--        该 XML 映射文件用于实现与影厅相关的 CRUD 操作。通过 resultMap 实现结果映射，并通过 MyBatis 的动态 SQL 提供灵活的查询功能-->

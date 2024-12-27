@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panda.system.mapper.SysMovieMapper">
+
+    <!-- 结果映射，将查询结果映射为 SysMovie 对象 -->
+    <resultMap id="SysMovieResult" type="SysMovie">
+        <id property="movieId" column="movie_id"></id>
+        <collection property="movieCategoryList" column="movie_id" select="com.panda.system.mapper.SysMovieCategoryMapper.findOneMovieCategorys"></collection>
+    </resultMap>
+
+    <!-- 查询所有电影，支持筛选条件 -->
+    <select id="findAllMovies" resultMap="SysMovieResult" parameterType="SysMovieVo">
+        select sm.* from sys_movie sm
+        <if test="movieCategoryId != null and movieCategoryId > 0">
+            join sys_movie_to_category smtc on sm.movie_id = smtc.movie_id
+            join sys_movie_category smc on smtc.movie_category_id = smc.movie_category_id
+        </if>
+        <where>
+            del_state = 0
+            <if test="movieName != null and movieName != ''">
+                and sm.movie_name like concat('%', #{movieName}, '%')
+            </if>
+            <if test="movieArea != null and movieArea !=''">
+                and sm.movie_area = #{movieArea}
+            </if>
+            <if test="startDate != null">
+                and sm.release_date &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                and sm.release_date &lt;= #{endDate}
+            </if>
+            <if test="movieCategoryId != null and movieCategoryId > 0">
+                and smc.movie_category_id = #{movieCategoryId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据电影ID查询单部电影的详细信息，返回电影相关信息 -->
+    <select id="findMovieById" resultMap="SysMovieResult" parameterType="long">
+        select * from sys_movie where movie_id = #{id}
+    </select>
+
+    <!-- 根据ID查询电影，不包括额外的电影类别信息 -->
+    <select id="findOneMovie" resultType="SysMovie" parameterType="long">
+        select * from sys_movie where movie_id = #{id}
+    </select>
+
+    <!-- 添加新电影，插入数据到 sys_movie 表 -->
+    <update id="addMovie" parameterType="SysMovie">
+        insert into sys_movie(
+        <if test=" movieName != null and movieName != ''">movie_name,</if>
+        <if test=" movieLength != null and movieLength != 0">movie_length,</if>
+        <if test=" moviePoster != null and moviePoster != ''">movie_poster,</if>
+        <if test=" movieArea != null and movieArea != ''">movie_area,</if>
+        <if test=" movieIntroduction != null and movieIntroduction != ''">movie_introduction,</if>
+        <if test=" releaseDate != null">release_date,</if>
+        <if test=" moviePictures != null and moviePictures != ''">movie_pictures</if>
+        ) values(
+        <if test=" movieName != null and movieName != ''">#{movieName},</if>
+        <if test=" movieLength != null and movieLength != 0">#{movieLength},</if>
+        <if test=" moviePoster != null and moviePoster != ''">#{moviePoster},</if>
+        <if test=" movieArea != null and movieArea != ''">#{movieArea},</if>
+        <if test=" movieIntroduction != null and movieIntroduction != ''">#{movieIntroduction},</if>
+        <if test=" releaseDate != null">#{releaseDate},</if>
+        <if test=" moviePictures != null and moviePictures != ''">#{moviePictures}</if>
+        )
+    </update>
+
+    <!-- 更新电影信息，修改指定电影的字段 -->
+    <update id="updateMovie" parameterType="SysMovie">
+        update sys_movie
+        set
+        <if test=" movieName != null and movieName != ''">movie_name = #{movieName},</if>
+        <if test=" movieLength != null and movieLength != 0">movie_length = #{movieLength},</if>
+        <if test=" moviePoster != null and moviePoster != ''">movie_poster = #{moviePoster},</if>
+        <if test=" movieIntroduction != null and movieIntroduction != ''">movie_introduction = #{movieIntroduction},</if>
+        <if test=" releaseDate != null">release_date = #{releaseDate},</if>
+        <if test=" movieBoxOffice != null">movie_box_office = #{movieBoxOffice},</if>
+        <if test=" moviePictures != null and moviePictures != ''">movie_pictures = #{moviePictures},</if>
+        <if test=" movieArea != null and movieArea != ''">movie_area = #{movieArea}</if>
+        where movie_id = #{movieId}
+    </update>
+
+    <!-- 软删除电影，将 del_state 设置为 1 -->
+    <update id="deleteMovie" parameterType="Long">
+        update sys_movie set del_state = 1 where movie_id = #{movieId}
+    </update>
+
+    <!-- 查询指定影院的所有上映电影 -->
+    <select id="findMovieByCinemaId" parameterType="Long" resultMap="SysMovieResult">
+        select distinct sm.* from sys_movie sm
+                                      join sys_session ss on sm.movie_id = ss.movie_id
+        where ss.session_date &gt;= CURDATE() and ss.session_date &lt; ADDDATE(curdate(),5)
+    </select>
+
+    <!-- 查询最新发布的电影 -->
+    <select id="findNewReleases" resultType="SysMovie">
+        SELECT *
+        FROM sys_movie
+        WHERE del_state = 0
+          AND release_date >= NOW() - INTERVAL 10 DAY
+        ORDER BY release_date DESC
+    </select>
+
+    <!-- 获取评分最高的电影 -->
+    <select id="getTopRatedMovies" resultType="SysMovie">
+        SELECT *
+        FROM sys_movie
+        WHERE del_state = 0  <!-- 确保未删除 -->
+        ORDER BY movie_rating DESC  <!-- 按电影评分从高到低排序 -->
+    </select>
+
+    <!-- 总票房榜 -->
+    <select id="totalBoxOfficeList" resultMap="SysMovieResult">
+        select sm.* from sys_movie sm
+        where del_state = 0 and sm.release_date &lt;= curdate()
+        order by sm.movie_box_office desc
+    </select>
+
+    <!-- 国内票房榜：已上映的国内电影中，按票房取前10 -->
+    <select id="domesticBoxOfficeList" resultMap="SysMovieResult">
+        select sm.* from sys_movie sm
+        where del_state = 0 and sm.movie_area in ("中国大陆", "中国香港", "中国台湾") and sm.release_date &lt;= curdate()
+        order by sm.movie_box_office desc
+    </select>
+
+    <!-- 国外票房榜：已上映的国外电影中，按票房取前10 -->
+    <select id="foreignBoxOfficeList" resultMap="SysMovieResult">
+        select sm.* from sys_movie sm
+        where del_state = 0 and sm.movie_area not in ("中国大陆", "中国香港", "中国台湾") and sm.release_date &lt;= curdate()
+        order by sm.movie_box_office desc
+    </select>
+
+    <!-- 查询电影的所有评论 -->
+    <select id="getReviewsByMovieId" resultType="com.panda.system.domin.Review">
+        SELECT review_id AS reviewId, movie_id AS movieId, user_id AS userId, rating, comment, review_date AS reviewDate
+        FROM review
+        WHERE movie_id = #{movieId} AND del_state = 0
+    </select>
+
+    <!-- 插入评论 -->
+    <insert id="insertReview">
+        INSERT INTO review (movie_id, user_id, rating, comment, review_date)
+        VALUES (#{movieId}, #{userId}, #{rating}, #{comment}, NOW())
+    </insert>
+
+    <!-- 计算电影的平均评分 -->
+    <select id="calculateAverageRating" resultType="Double">
+        SELECT AVG(rating)
+        FROM review
+        WHERE movie_id = #{movieId} AND del_state = 0
+    </select>
+
+    <!-- 更新电影评分 -->
+    <update id="updateMovieRating">
+        UPDATE sys_movie
+        SET movie_rating = #{avgRating}
+        WHERE movie_id = #{movieId}
+    </update>
+
+    <!-- 获取按日期降序排列的评论 -->
+    <select id="getReviewsByDateDesc" resultType="com.panda.system.domin.Review">
+        SELECT review_id AS reviewId, movie_id AS movieId, user_id AS userId, rating, comment, review_date AS reviewDate
+        FROM review
+        WHERE movie_id = #{movieId} AND del_state = 0
+        ORDER BY review_date DESC
+    </select>
+
+    <!-- 获取按评分降序排列的评论（最好） -->
+    <select id="getReviewsByRatingDesc" resultType="com.panda.system.domin.Review">
+        SELECT review_id AS reviewId, movie_id AS movieId, user_id AS userId, rating, comment, review_date AS reviewDate
+        FROM review
+        WHERE movie_id = #{movieId} AND del_state = 0
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 获取按评分升序排列的评论（最差） -->
+    <select id="getReviewsByRatingAsc" resultType="com.panda.system.domin.Review">
+        SELECT review_id AS reviewId, movie_id AS movieId, user_id AS userId, rating, comment, review_date AS reviewDate
+        FROM review
+        WHERE movie_id = #{movieId} AND del_state = 0
+        ORDER BY rating ASC
+    </select>
+
+    <!-- 根据电影ID查询单部电影 -->
+    <select id="selectMovieById" resultType="SysMovie">
+        SELECT * FROM sys_movie WHERE movie_id = #{movieId}
+    </select>
+
+    <!-- 检查电影是否已经存在 -->
+    <select id="checkMovieExists" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM sys_movie WHERE movie_name = #{movieName}
+    </select>
+
+    <select id="selectBoxOfficeStatistics" resultType="com.panda.system.domin.vo.MovieBoxOfficeVO">
+        SELECT movie_name AS movieName, movie_box_office AS boxOffice
+        FROM sys_movie
+        ORDER BY movie_box_office DESC
+            LIMIT 10
+    </select>
+
+
+
+
+</mapper>
+<!--        说明：-->
+<!--        resultMap 和 select：-->
+
+<!--        通过 resultMap 来映射 SQL 查询的结果到 SysMovie 对象。-->
+<!--        各种 select 语句可以查询电影的详细信息，如所有电影、按条件筛选的电影、按影院获取电影等。-->
+<!--        增、删、改操作：-->
+
+<!--        insert 插入评论数据，update 更新电影评分等信息，delete 用于标记电影为已删除。-->
+<!--        票房榜、电影评论等功能：-->
+
+<!--        电影的票房排名、评分查询等功能通过多种 select 查询实现，支持不同排序方式的电影评论获取。-->
+<!--        影片分类、评论等嵌套查询：-->
+
+<!--        电影的分类信息、评论等通过嵌套查询实现。例如，findAllMovies 允许按电影类别、评分等条件进行筛选。-->
+<!--        该 mapper 文件集成了很多常用的查询与操作，适用于复杂的电影管理系统，如电影信息、评论、票房等管理。-->
